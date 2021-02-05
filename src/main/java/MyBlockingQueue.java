@@ -8,7 +8,7 @@ public class MyBlockingQueue {
     public DataConsumer consumer;
     public MyBlockingQueue(int maxStoreID, int opHour, int numPurchases){
         count = maxStoreID * opHour * numPurchases;
-        queue = new ArrayBlockingQueue<String[]>(10000);
+        queue = new ArrayBlockingQueue<String[]>(Math.max(20000, count/4));
         consumer = new DataConsumer(queue, maxStoreID, count);
     }
 }

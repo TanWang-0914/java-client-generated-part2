@@ -16,8 +16,8 @@ public class PurchaseApiTest {
     public static void main(String[] args) {
 
         PurchaseApi apiInstance = new PurchaseApi();
-        apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
-        // apiInstance.getApiClient().setBasePath("http://100.24.240.191:8080/HW_1_war/");
+        // apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
+        apiInstance.getApiClient().setBasePath("http://35.175.64.87:8080/HW_1_war/");
         System.out.println(apiInstance.getApiClient().getBasePath());
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
@@ -112,7 +112,7 @@ public class PurchaseApiTest {
                 System.out.println("date = 20210101");
             }
         }else{
-            date = 20210101;
+            date = 2021010;
             System.out.println("date = 20210101");
         }
 
@@ -222,12 +222,15 @@ public class PurchaseApiTest {
         long meanResTime = totalReqTime/recordsLen;
         int medianResTime = responseTimeList.get(recordsLen/2);
         int p99ResTime = responseTimeList.get((int)(recordsLen*0.99));
+        int maxResTime = responseTimeList.get(responseTimeList.size()-1);
 
         System.out.println("Mean Response Time:" + meanResTime);
         System.out.println("Median Response Time:" + medianResTime);
         System.out.println("P99 Response Time:" + p99ResTime);
+        System.out.println("Max Response Time:" + maxResTime);
 
         System.out.println("consumer thread finished.");
+        System.out.println("Program finished.");
 
 
 //        PurchaseItems testItem1 = new PurchaseItems();
