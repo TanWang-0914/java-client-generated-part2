@@ -45,15 +45,13 @@ public class SingleRquest implements Runnable{
             ApiResponse apiResponse = apiInstance.newPurchaseWithHttpInfo(body, storeID, custID, purchaseDate);
 //            System.out.println(apiResponse.getData());
 //            System.out.println(apiResponse.getHeaders());
-            int stausCode = apiResponse.getStatusCode();
-            if (stausCode == 200 || stausCode == 201){
-                reqCount.incSuc(storeID,hour);
-            }else {
-                logger.info("StatusCode-" + stausCode + ": " + "/purchase/"+storeID+"/customer/"+custID+"/date/"+purchaseDate);
-                reqCount.incFail(storeID,hour);
+            int statusCode = apiResponse.getStatusCode();
+            if (statusCode > 201){
+                logger.info("StatusCode-" + statusCode + ": " + "/purchase/"+storeID+"/customer/"+custID+"/date/"+purchaseDate);
+                reqCount.incFail();
             }
             long reqEndTime = System.currentTimeMillis();
-            String[] tempData = {String.valueOf(reqStartTime),"POST", String.valueOf(reqEndTime-reqStartTime),String.valueOf(stausCode)};
+            String[] tempData = {String.valueOf(reqStartTime),"POST", String.valueOf(reqEndTime-reqStartTime),String.valueOf(statusCode)};
             queue.put(tempData);
         } catch (ApiException | InterruptedException e) {
             System.err.println("Exception when calling PurchaseApi#newPurchase");

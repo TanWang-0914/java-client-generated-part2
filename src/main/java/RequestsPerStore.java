@@ -17,15 +17,17 @@ public class RequestsPerStore implements Runnable{
     ReqCount reqCount;
     int[] successfulReq;
     int[] failedReq;
+    int opHour;
     BlockingQueue<String[]> queue;
 
-    public RequestsPerStore(int storeID, int maxCustID, int maxItemID, int numPurchases, int numItemPerPurchase,String date, PurchaseApi apiInstance, Phase phase,ReqCount reqCount, BlockingQueue<String[]> queue){
+    public RequestsPerStore(int storeID, int maxCustID, int maxItemID, int numPurchases, int numItemPerPurchase,String date, int opHour,PurchaseApi apiInstance, Phase phase,ReqCount reqCount, BlockingQueue<String[]> queue){
         this.storeID = storeID;
         this.maxCustID = maxCustID;
         this.maxItemID = maxItemID;
         this.numPurchases = numPurchases;
         this.numItemPerPurchase = numItemPerPurchase;
         this.date = date;
+        this.opHour = opHour;
         this.apiInstance = apiInstance;
         this.phase = phase;
         successfulReq = new int[12];
@@ -36,8 +38,7 @@ public class RequestsPerStore implements Runnable{
 
     @Override
     public void run() {
-        for (int hour = 0; hour < 12; hour++){
-//            if (phase.currentPhase.equals("EastPhaseStart")) phase.changePhase("EastPhaseRunning");
+        for (int hour = 0; hour < opHour; hour++){
             for (int i = 0; i < numPurchases; i++){
                 int currentCustID = rand.nextInt(maxCustID)+1000*storeID;
 

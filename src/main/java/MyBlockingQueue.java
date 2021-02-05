@@ -1,7 +1,5 @@
-import javax.xml.crypto.Data;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CountDownLatch;
 
 public class MyBlockingQueue {
     BlockingQueue<String[]> queue;
@@ -10,7 +8,7 @@ public class MyBlockingQueue {
     public DataConsumer consumer;
     public MyBlockingQueue(int maxStoreID, int opHour, int numPurchases){
         count = maxStoreID * opHour * numPurchases;
-        queue = new ArrayBlockingQueue<String[]>(count);
+        queue = new ArrayBlockingQueue<String[]>(10000);
         consumer = new DataConsumer(queue, maxStoreID, count);
     }
 }

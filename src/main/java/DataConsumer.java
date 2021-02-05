@@ -29,14 +29,9 @@ public class DataConsumer implements Runnable{
             while (count>0){
                 String[] data = queue.take();
                 writer.writeNext(data);
-//                Runnable writeOnce = () -> {
-//                    writer.writeNext(data);
-//                };
-//                Thread writeThread = new Thread(writeOnce);
-//                writeThread.start();
-//                writeThread.join();
                 count--;
             }
+            writer.flush();
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }

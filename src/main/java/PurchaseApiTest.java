@@ -17,6 +17,7 @@ public class PurchaseApiTest {
 
         PurchaseApi apiInstance = new PurchaseApi();
         apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
+        // apiInstance.getApiClient().setBasePath("http://100.24.240.191:8080/HW_1_war/");
         System.out.println(apiInstance.getApiClient().getBasePath());
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
@@ -125,11 +126,11 @@ public class PurchaseApiTest {
 
         int currentStoreIndex = 0;
         Thread[] storeThreads = new Thread[maxStores];
-        int opHour = 12;
+        int opHours = 9;
 
-        reqCount = new ReqCount(maxStores,opHour);
+        reqCount = new ReqCount(maxStores,opHours);
 
-        MyBlockingQueue blockingQueue = new MyBlockingQueue(maxStores, opHour, numPurchases);
+        MyBlockingQueue blockingQueue = new MyBlockingQueue(maxStores, opHours, numPurchases);
         Thread consumerThread = new Thread(blockingQueue.consumer);
         consumerThread.start();
 
@@ -140,7 +141,7 @@ public class PurchaseApiTest {
                 System.out.println(phase.currentPhase);
                 phase.changePhase("EastPhaseRunning");
                 for (; currentStoreIndex < maxStores/4; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),apiInstance,phase,reqCount,blockingQueue.queue);
+                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount,blockingQueue.queue);
                     storeThreads[currentStoreIndex] = new Thread(storeThread);
                     storeThreads[currentStoreIndex].start();
                 }
@@ -149,7 +150,7 @@ public class PurchaseApiTest {
 //                System.out.println(phase.currentPhase);
                 phase.changePhase("CentralPhaseRunning");
                 for (; currentStoreIndex < maxStores/2; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),apiInstance,phase,reqCount, blockingQueue.queue);
+                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount,blockingQueue.queue);
                     storeThreads[currentStoreIndex] = new Thread(storeThread);
                     storeThreads[currentStoreIndex].start();
                 }
@@ -158,7 +159,7 @@ public class PurchaseApiTest {
 //                System.out.println(phase.currentPhase);
                 phase.changePhase("WestPhaseRunning");
                 for (; currentStoreIndex < maxStores; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),apiInstance,phase,reqCount, blockingQueue.queue);
+                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount, blockingQueue.queue);
                     storeThreads[currentStoreIndex] = new Thread(storeThread);
                     storeThreads[currentStoreIndex].start();
                 }
@@ -179,18 +180,8 @@ public class PurchaseApiTest {
 
         long endTime = System.currentTimeMillis();
 
-        int totalSucReq = 0;
-        int totalFailReq = 0;
-
-        for (int storeId = 0; storeId < maxStores; storeId++){
-            int numSuc = 0;
-            int numFail = 0;
-            for(int ns: reqCount.successfulReq[storeId]) numSuc += ns;
-            for(int nf: reqCount.failedReq[storeId]) numFail += nf;
-            //System.out.println("Store" + storeId + ": suc request " + numSuc + ", fail request" + numFail);
-            totalSucReq += numSuc;
-            totalFailReq += numFail;
-        }
+        int totalFailReq = reqCount.failedReq;
+        int totalSucReq = maxStores*opHours*numPurchases-totalFailReq;
 
         double timePeriod = ((endTime-startTime)/1000.0);
         double throughput = (totalSucReq + totalFailReq)/ timePeriod;
