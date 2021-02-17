@@ -17,7 +17,7 @@ public class PurchaseApiTest {
 
         PurchaseApi apiInstance = new PurchaseApi();
         // apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
-        apiInstance.getApiClient().setBasePath("http://35.175.64.87:8080/HW_1_war/");
+        apiInstance.getApiClient().setBasePath("http://52.91.146.150:8080/HW_1_war/");
         System.out.println(apiInstance.getApiClient().getBasePath());
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
@@ -124,18 +124,24 @@ public class PurchaseApiTest {
             ipAddress = scanner.nextLine();
         }
 
+        // Thread Array to store each Store Thread
         int currentStoreIndex = 0;
         Thread[] storeThreads = new Thread[maxStores];
+        // setting operating hour to 9 hours per day
         int opHours = 9;
 
+        // create request count class
         reqCount = new ReqCount(maxStores,opHours);
 
+        // create blockingQueue and dataConsumer, and start dataConsumer thread
         MyBlockingQueue blockingQueue = new MyBlockingQueue(maxStores, opHours, numPurchases);
         Thread consumerThread = new Thread(blockingQueue.consumer);
         consumerThread.start();
 
+        // read start time stamp
         long startTime = System.currentTimeMillis();
 
+        // Start running
         while (true){
             if (phase.getPhase().equals("EastPhaseStart")){
                 System.out.println(phase.currentPhase);
@@ -178,6 +184,7 @@ public class PurchaseApiTest {
             System.out.println(e.getMessage());
         }
 
+        // read finish time stamp
         long endTime = System.currentTimeMillis();
 
         int totalFailReq = reqCount.failedReq;
@@ -194,13 +201,14 @@ public class PurchaseApiTest {
         System.out.println("Throughput:" + throughput);
 
 
-
+        // close consumer thread, this step will make sure all records are wrote to CSV File
         try{
             consumerThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
+        // read response records and calculate response time
         long totalReqTime = 0;
         List<Integer> responseTimeList = new ArrayList<>();
 
