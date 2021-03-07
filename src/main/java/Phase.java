@@ -8,11 +8,12 @@ public class Phase {
         }
     }
 
-    public synchronized String getPhase (){
-        String res;
-        synchronized (currentPhase){
-            res = new String(currentPhase);
-        }
-        return res;
+    public String getPhase (){
+//        String res;
+//        synchronized (currentPhase){
+//            res = new String(currentPhase);
+//        }
+//        return res;
+        return currentPhase;
     }
 }

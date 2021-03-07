@@ -10,12 +10,14 @@ import java.util.concurrent.CountDownLatch;
 
 public class DataConsumer implements Runnable{
 
+    MyBlockingQueue myqueue;
     BlockingQueue<String[]> queue;
     private int maxStoreID;
     private int count;
 
-    public DataConsumer(BlockingQueue<String[]> queue, int maxStoreID, int count){
-        this.queue = queue;
+    public DataConsumer(MyBlockingQueue myqueue, int maxStoreID, int count){
+        this.myqueue = myqueue;
+        this.queue = myqueue.queue;
         this.maxStoreID = maxStoreID;
         this.count = count;
     }
@@ -29,7 +31,7 @@ public class DataConsumer implements Runnable{
             String[] header = {"startTime", "requestType","latency","responseCode"};
             writer.writeNext(header);
             List<String[]> data = new ArrayList<>();
-            while (count>0){
+            while (queue.size()>0 || !myqueue.finished){
                 String[] dataLine = queue.take();
                 data.add(dataLine);
                 count--;

@@ -1,12 +1,12 @@
 public class ReqCount {
 
-    public int failedReq;
+    public int succReq;
 
     public ReqCount(int maxStoreID, int opHours){
-        failedReq = 0;
+        succReq = 0;
     }
 
-    public synchronized void incFail (){
-        failedReq++;
+    public synchronized void incSuc (int num){
+        succReq+= num;
     }
 }

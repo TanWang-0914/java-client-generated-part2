@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 public class PurchaseApiTest {
     private static Phase phase = new Phase();
@@ -15,10 +16,13 @@ public class PurchaseApiTest {
 
     public static void main(String[] args) {
 
-        PurchaseApi apiInstance = new PurchaseApi();
-        // apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
-        apiInstance.getApiClient().setBasePath("http://52.91.146.150:8080/HW_1_war/");
-        System.out.println(apiInstance.getApiClient().getBasePath());
+//        PurchaseApi apiInstance = new PurchaseApi();
+//        apiInstance.getApiClient().setBasePath("http://localhost:8080/HW_1_war_exploded/");
+//        apiInstance.getApiClient().setBasePath("http://52.91.146.150:8080/HW_1_war/");
+//        String basePath = "http://localhost:8080/HW_1_war_exploded/";
+//        String basePath = "http://54.144.146.250:8080/HW_1_war/";
+        String basePath = "http://CS6650LoadBalancer-771575157.us-east-1.elb.amazonaws.com:8080/HW_1_war/";
+
 
         int maxStores=1, maxCustID, maxItemID, numPurchases, numItemPerPurchase, date;
         String ipAddress = "0.0.0.0";
@@ -142,37 +146,37 @@ public class PurchaseApiTest {
         long startTime = System.currentTimeMillis();
 
         // Start running
-        while (true){
-            if (phase.getPhase().equals("EastPhaseStart")){
-                System.out.println(phase.currentPhase);
-                phase.changePhase("EastPhaseRunning");
-                for (; currentStoreIndex < maxStores/4; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount,blockingQueue.queue);
-                    storeThreads[currentStoreIndex] = new Thread(storeThread);
-                    storeThreads[currentStoreIndex].start();
-                }
+        System.out.println("EastPhaseStart");
+        CountDownLatch centralPhaseLatch = new CountDownLatch(1);
+        CountDownLatch westPhaseLatch = new CountDownLatch(1);
+        for (; currentStoreIndex < maxStores/4; currentStoreIndex++){
+            RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex, maxCustID, maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,basePath,centralPhaseLatch, westPhaseLatch, reqCount, blockingQueue.queue);
+            storeThreads[currentStoreIndex] = new Thread(storeThread);
+            storeThreads[currentStoreIndex].start();
+        }
+
+        try {
+            centralPhaseLatch.await();
+            System.out.println("CentralPhaseStart");
+            for (; currentStoreIndex < maxStores/2; currentStoreIndex++){
+                RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,basePath,centralPhaseLatch,westPhaseLatch,reqCount,blockingQueue.queue);
+                storeThreads[currentStoreIndex] = new Thread(storeThread);
+                storeThreads[currentStoreIndex].start();
             }
-            else if (phase.getPhase().equals("CentralPhaseStart")){
-//                System.out.println(phase.currentPhase);
-                phase.changePhase("CentralPhaseRunning");
-                for (; currentStoreIndex < maxStores/2; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount,blockingQueue.queue);
-                    storeThreads[currentStoreIndex] = new Thread(storeThread);
-                    storeThreads[currentStoreIndex].start();
-                }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            westPhaseLatch.await();
+            System.out.println("WestPhaseStart");
+            for (; currentStoreIndex < maxStores; currentStoreIndex++){
+                RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,basePath,centralPhaseLatch,westPhaseLatch,reqCount,blockingQueue.queue);
+                storeThreads[currentStoreIndex] = new Thread(storeThread);
+                storeThreads[currentStoreIndex].start();
             }
-            else if (phase.getPhase().equals("WestPhaseStart")){
-//                System.out.println(phase.currentPhase);
-                phase.changePhase("WestPhaseRunning");
-                for (; currentStoreIndex < maxStores; currentStoreIndex++){
-                    RequestsPerStore storeThread = new RequestsPerStore(currentStoreIndex,maxCustID,maxItemID,numPurchases,numItemPerPurchase,String.valueOf(date),opHours,apiInstance,phase,reqCount, blockingQueue.queue);
-                    storeThreads[currentStoreIndex] = new Thread(storeThread);
-                    storeThreads[currentStoreIndex].start();
-                }
-                break;
-            }else{
-                continue;
-            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         // wait for each one to finish
@@ -184,11 +188,12 @@ public class PurchaseApiTest {
             System.out.println(e.getMessage());
         }
 
-        // read finish time stamp
+        blockingQueue.finished = true;
+
         long endTime = System.currentTimeMillis();
 
-        int totalFailReq = reqCount.failedReq;
-        int totalSucReq = maxStores*opHours*numPurchases-totalFailReq;
+        int totalSucReq = reqCount.succReq;
+        int totalFailReq = maxStores*opHours*numPurchases-totalSucReq;
 
         double timePeriod = ((endTime-startTime)/1000.0);
         double throughput = (totalSucReq + totalFailReq)/ timePeriod;
@@ -240,32 +245,6 @@ public class PurchaseApiTest {
         System.out.println("consumer thread finished.");
         System.out.println("Program finished.");
 
-
-//        PurchaseItems testItem1 = new PurchaseItems();
-//        testItem1.setItemID("10001");
-//        testItem1.setNumberOfItems(1);
-//        System.out.println(testItem1.toString());
-//        PurchaseItems testItem2 = new PurchaseItems();
-//        testItem2.setItemID("10002");
-//        testItem2.setNumberOfItems(1);
-//        System.out.println(testItem2.toString());
-//        Purchase body = new Purchase(); // Purchase | items purchased
-//        body.addItemsItem(testItem1);
-//        body.addItemsItem(testItem2);
-//
-//        Integer storeID = 56; // Integer | ID of the store the purchase takes place at
-//        Integer custID = 56; // Integer | customer ID making purchase
-//        String date = "20210101";
-//
-//        try {
-//            ApiResponse apiResponse = apiInstance.newPurchaseWithHttpInfo(body, storeID, custID, date);
-//            System.out.println(apiResponse.getData());
-//            System.out.println(apiResponse.getHeaders());
-//            System.out.println(apiResponse.getStatusCode());
-//        } catch (ApiException e) {
-//            System.err.println("Exception when calling PurchaseApi#newPurchase");
-//            e.printStackTrace();
-//        }
     }
 
 
